@@ -6,6 +6,7 @@
 
 void viewAssignmentsByProject(sqlite3 *);
 void resetStream();
+int genericRowCallback(void *, int, char **, char **);
 
 int main()
 {
@@ -20,6 +21,13 @@ int main()
     else
     {
         std::cout << "Database opened successfully." << std::endl;
+    }
+    std::string query = "select * from employee";
+    rc = sqlite3_exec(db, query.c_str(), genericRowCallback, NULL, NULL);
+    if (rc != SQLITE_OK)
+    {
+        std::cout << "There was an error - select callback: " << sqlite3_errmsg(db) << std::endl;
+        std::cout << query << std::endl;
     }
     viewAssignmentsByProject(db);
     sqlite3_close(db);
@@ -106,4 +114,30 @@ void viewAssignmentsByProject(sqlite3 *db)
         std::cout << std::endl;
     }
     sqlite3_finalize(result);
+}
+
+int genericRowCallback(void *extData, int numCols, char **values, char **colName)
+{
+    static int rowCount = 0;
+    if (rowCount == 0)
+    {
+        for (int i = 0; i < numCols; i++)
+        {
+            std::cout << std::setw(15) << colName[i];
+        }
+        std::cout << std::endl;
+    }
+    for (int i = 0; i < numCols; i++)
+    {
+        std::cout << std::setw(15);
+        // std::cout << colName[i] << ": ";
+        if (values[i] != NULL)
+            std::cout << values[i];
+        else
+            std::cout << " ";
+        // std::cout << std::endl;
+    }
+    std::cout << std::endl;
+    rowCount++;
+    return SQLITE_OK;
 }
